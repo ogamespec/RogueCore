@@ -4,7 +4,7 @@ _To read on your native language use your favourite machine translation._
 
 RogueCore - маленький и аккуратный движок для создания Rogue-like игр на C#.
 
-Исходный код не содержит комментариев, всё описание движка находится в этом Reamde.
+Исходный код не содержит комментариев, всё описание движка находится в этом Readme.
 
 ![Colors](/Images/RogueCoreColors.png)
 
