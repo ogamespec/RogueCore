@@ -54,7 +54,7 @@ namespace RogueCore
 
         public static void TraceCircle(Point center, int radius, TraceDelegate cb, object ctx = null)
         {
-            Point prevPoint = new Point(int.MaxValue, int.MaxValue);
+            List<Point> visited = new List<Point>();
 
             if (radius <= 0)
                 return;
@@ -70,23 +70,65 @@ namespace RogueCore
 
                 Point point = new Point(center.X + x, center.Y + y);
 
-                if (!(point.X == prevPoint.X && point.Y == prevPoint.Y))
+                bool skip = false;
+
+                foreach (Point p in visited)
                 {
-                    int res = cb(point, ctx);
-                    if (res < 0)
+                    if ( p.X == point.X && p.Y == point.Y )
+                    {
+                        skip = true;
                         break;
+                    }
                 }
 
-                prevPoint.X = point.X;
-                prevPoint.Y = point.Y;
+                if (skip)
+                {
+                    continue;
+                }
+
+                int res = cb(point, ctx);
+                if (res < 0)
+                    break;
             }
+        }
+
+        internal class FovState
+        {
+            public List<Point> visited;
+            public TraceDelegate originalCb;
+            public object originalContext;
+        }
+
+        private static int FovCallback(Point point, object ctx)
+        {
+            FovState state = (FovState)ctx;
+
+            foreach ( Point p in state.visited)
+            {
+                if ( p.X == point.X && p.Y == point.Y)
+                {
+                    return 0;
+                }
+            }
+
+            return state.originalCb(point, state.originalContext);
         }
 
         public static void TraceFov(Point point, int radius, TraceDelegate cb, object ctx = null)
         {
+            FovState state = new FovState();
+
+            List<Point> visited = new List<Point>();
+
+            state.visited = visited;
+            state.originalCb = cb;
+            state.originalContext = ctx;
+
             int res = cb(point, ctx);
             if (res < 0)
                 return;
+
+            visited.Add(point);
 
             int n = radius * 24;
             double dtheta = 2.0 * Math.PI / n;
@@ -99,7 +141,7 @@ namespace RogueCore
 
                 Point end = new Point(point.X + x, point.Y + y);
 
-                Tracer.TraceLine(point, end, cb, null);
+                Tracer.TraceLine(point, end, FovCallback, state);
             }
         }
 
