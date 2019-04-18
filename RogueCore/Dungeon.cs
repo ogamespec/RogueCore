@@ -12,6 +12,7 @@ namespace RogueCore
         public bool visible = false;
         public bool solid = false;
         public Char character = new Char();
+        public int debugCounter = 0;
     }
 
     public class Dungeon
@@ -135,7 +136,7 @@ namespace RogueCore
             }
         }
 
-        private int FovCallback(Point point, object ctx)
+        private int DungeonFovCallback(Point point, object ctx)
         {
             Cell cell = GetCell(point.X, point.Y);
 
@@ -149,7 +150,7 @@ namespace RogueCore
 
         public void UpdateFov (Point point, int radius)
         {
-            Tracer.TraceFov(point, radius, FovCallback);
+            Tracer.TraceFov(point, radius, DungeonFovCallback);
         }
 
     }

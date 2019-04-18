@@ -13,9 +13,9 @@ namespace RogueCore
 
         // https://rosettacode.org/wiki/Bitmap/Bresenham%27s_line_algorithm#C.2B.2B
 
-        public static void TraceLine(Point start, Point end, TraceDelegate cb, object ctx = null)
+        public static List<Point> TraceLine(Point start, Point end, TraceDelegate cb = null, object ctx = null)
         {
-            Point prevPoint = new Point(int.MaxValue, int.MaxValue);
+            List<Point> visited = new List<Point>();
 
             int x0 = start.X;
             int x1 = end.X;
@@ -24,18 +24,43 @@ namespace RogueCore
 
             if (x0 == x1 && y0 == y1)
             {
-                cb(new Point(x0, y0), ctx);
-                return;
+                Point p0 = new Point(x0, y0);
+
+                visited.Add(p0);
+
+                if (cb != null)
+                {
+                    cb(p0, ctx);
+                }
+
+                return visited;
             }
 
             int dx = Math.Abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
             int dy = Math.Abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
             int err = (dx > dy ? dx : -dy) / 2, e2;
+
             for (;;)
             {
                 Point point = new Point(x0, y0);
 
-                if (!(point.X == prevPoint.X && point.Y == prevPoint.Y))
+                bool skip = false;
+
+                foreach (Point p in visited)
+                {
+                    if (p.X == point.X && p.Y == point.Y)
+                    {
+                        skip = true;
+                        break;
+                    }
+                }
+
+                if (skip)
+                {
+                    continue;
+                }
+
+                if (cb != null)
                 {
                     int res = cb(point, ctx);
                     if (res < 0)
@@ -47,17 +72,18 @@ namespace RogueCore
                 if (e2 > -dx) { err -= dy; x0 += sx; }
                 if (e2 < dy) { err += dx; y0 += sy; }
 
-                prevPoint.X = point.X;
-                prevPoint.Y = point.Y;
+                visited.Add(point);
             }
+
+            return visited;
         }
 
-        public static void TraceCircle(Point center, int radius, TraceDelegate cb, object ctx = null)
+        public static List<Point> TraceCircle(Point center, int radius, TraceDelegate cb = null, object ctx = null)
         {
             List<Point> visited = new List<Point>();
 
             if (radius <= 0)
-                return;
+                return visited;
 
             int n = radius * 12;
             double dtheta = 2.0 * Math.PI / n;
@@ -86,10 +112,17 @@ namespace RogueCore
                     continue;
                 }
 
-                int res = cb(point, ctx);
-                if (res < 0)
-                    break;
+                if (cb != null)
+                {
+                    int res = cb(point, ctx);
+                    if (res < 0)
+                        break;
+                }
+
+                visited.Add(point);
             }
+
+            return visited;
         }
 
         internal class FovState
@@ -111,10 +144,18 @@ namespace RogueCore
                 }
             }
 
-            return state.originalCb(point, state.originalContext);
+            if (state.originalCb != null)
+            {
+                int res = state.originalCb(point, state.originalContext);
+                if (res < 0)
+                    return res;
+            }
+
+            state.visited.Add(point);
+            return 0;
         }
 
-        public static void TraceFov(Point point, int radius, TraceDelegate cb, object ctx = null)
+        public static List<Point> TraceFov(Point point, int radius, TraceDelegate cb = null, object ctx = null)
         {
             FovState state = new FovState();
 
@@ -124,9 +165,12 @@ namespace RogueCore
             state.originalCb = cb;
             state.originalContext = ctx;
 
-            int res = cb(point, ctx);
-            if (res < 0)
-                return;
+            if (cb != null)
+            {
+                int res = cb(point, ctx);
+                if (res < 0)
+                    return visited;
+            }
 
             visited.Add(point);
 
@@ -141,23 +185,30 @@ namespace RogueCore
 
                 Point end = new Point(point.X + x, point.Y + y);
 
-                Tracer.TraceLine(point, end, FovCallback, state);
+                TraceLine(point, end, FovCallback, state);
             }
+
+            return visited;
         }
 
-        public static void TracePath (Dungeon map, Point from, Point to, TraceDelegate cb, object ctx = null)
+        public static List<Point> TracePath (Dungeon map, Point from, Point to, TraceDelegate cb = null, object ctx = null)
         {
             List<Point> points = FindPath(map, from, to);
 
             if (points == null)
-                return;
+                return new List<Point>();
             
             foreach (var point in points)
             {
-                int res = cb(point, ctx);
-                if (res < 0)
-                    break;
+                if (cb != null)
+                {
+                    int res = cb(point, ctx);
+                    if (res < 0)
+                        break;
+                }
             }
+
+            return points;
         }
 
         // https://lsreg.ru/realizaciya-algoritma-poiska-a-na-c/

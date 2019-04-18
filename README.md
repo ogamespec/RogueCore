@@ -85,10 +85,10 @@ Char имеет следующие свойства:
 
 Все методы класса статические:
 
-- void TraceLine(Point start, Point end, TraceDelegate cb, object ctx): Трассировка линии
-- void TraceCircle(Point center, int radius, TraceDelegate cb, object ctx): Трассировка окружности
-- void TraceFov(Point point, int radius, TraceDelegate cb, object ctx): Трассировка поля обзора
-- void TracePath (Dungeon map, Point from, Point to, TraceDelegate cb, object ctx): Трассировка пути по карте
+- List<Point> TraceLine(Point start, Point end, TraceDelegate cb, object ctx): Трассировка линии
+- List<Point> TraceCircle(Point center, int radius, TraceDelegate cb, object ctx): Трассировка окружности
+- List<Point> TraceFov(Point point, int radius, TraceDelegate cb, object ctx): Трассировка поля обзора
+- List<Point> TracePath (Dungeon map, Point from, Point to, TraceDelegate cb, object ctx): Трассировка пути по карте
 
 ## Класс Dungeon
 
